@@ -12,4 +12,10 @@ def create_user():
 
 @user_router.route("/user", methods=["GET"])
 def list_users():
-    return jsonify({"message": "List of users"}), 200
+    return jsonify(
+        {
+            "message": [
+                {"email": "iwan@gmail.com", "id": 1},
+            ]
+        }
+    ), 200
