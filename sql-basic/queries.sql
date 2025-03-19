@@ -98,3 +98,143 @@ GROUP BY
     DATE(t.transaction_date)
 ORDER BY 
     date DESC;
+
+-- 7. UNION Examples
+
+-- 7.1 Combined contact list of customers and outlet locations
+SELECT 
+    'Customer' AS contact_type,
+    name,
+    phone,
+    address
+FROM 
+    customers
+UNION
+SELECT 
+    'Outlet' AS contact_type,
+    name,
+    phone,
+    address
+FROM 
+    outlets
+ORDER BY 
+    contact_type, name;
+
+-- 7.2 Unifying transactions above 500k from different months
+SELECT 
+    transaction_id,
+    transaction_date,
+    'July 2023' AS period,
+    total_amount
+FROM 
+    transactions
+WHERE 
+    total_amount > 500000 AND EXTRACT(MONTH FROM transaction_date) = 7
+UNION
+SELECT 
+    transaction_id,
+    transaction_date,
+    'August 2023' AS period,
+    total_amount
+FROM 
+    transactions
+WHERE 
+    total_amount > 500000 AND EXTRACT(MONTH FROM transaction_date) = 8
+ORDER BY 
+    total_amount DESC;
+
+-- 7.3 Comprehensive service statistics combining different metrics
+SELECT 
+    service_id,
+    name AS service_name,
+    'High Price' AS category,
+    base_price AS value
+FROM 
+    services
+WHERE 
+    base_price > 300000
+UNION
+SELECT 
+    s.service_id,
+    s.name AS service_name,
+    'High Demand' AS category,
+    COUNT(td.service_id) AS value
+FROM 
+    services s
+JOIN 
+    transaction_details td ON s.service_id = td.service_id
+GROUP BY 
+    s.service_id, s.name
+HAVING 
+    COUNT(td.service_id) >= 3
+ORDER BY 
+    service_id;
+
+-- 7.4 Payment method distribution across outlets
+SELECT 
+    o.name AS outlet_name,
+    'Credit Card' AS payment_method,
+    COUNT(*) AS transaction_count
+FROM 
+    transactions t
+JOIN 
+    outlets o ON t.outlet_id = o.outlet_id
+WHERE 
+    t.payment_method = 'Credit Card'
+GROUP BY 
+    o.name
+UNION
+SELECT 
+    o.name AS outlet_name,
+    'Cash' AS payment_method,
+    COUNT(*) AS transaction_count
+FROM 
+    transactions t
+JOIN 
+    outlets o ON t.outlet_id = o.outlet_id
+WHERE 
+    t.payment_method = 'Cash'
+GROUP BY 
+    o.name
+UNION
+SELECT 
+    o.name AS outlet_name,
+    'Debit Card' AS payment_method,
+    COUNT(*) AS transaction_count
+FROM 
+    transactions t
+JOIN 
+    outlets o ON t.outlet_id = o.outlet_id
+WHERE 
+    t.payment_method = 'Debit Card'
+GROUP BY 
+    o.name
+ORDER BY 
+    outlet_name, payment_method;
+
+-- 7.5 Combining recent customers with high-value transactions for special promotion
+SELECT 
+    c.customer_id,
+    c.name,
+    'Recent Customer' AS category
+FROM 
+    customers c
+JOIN 
+    transactions t ON c.customer_id = t.customer_id
+WHERE 
+    t.transaction_date > (CURRENT_DATE - INTERVAL '30 days')
+UNION
+SELECT 
+    c.customer_id,
+    c.name,
+    'VIP Customer' AS category
+FROM 
+    customers c
+JOIN 
+    transactions t ON c.customer_id = t.customer_id
+GROUP BY 
+    c.customer_id, c.name
+HAVING 
+    SUM(t.total_amount) > 800000
+ORDER BY 
+    customer_id;
