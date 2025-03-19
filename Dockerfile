@@ -1,5 +1,5 @@
-FROM python:3.11-slim-bookworm
-
+FROM python:3.11-slim-bookworm 
+# debian
 RUN apt-get update
 
 COPY --from=ghcr.io/astral-sh/uv:0.6.4 /uv /uvx /bin/
